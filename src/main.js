@@ -5,9 +5,12 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GUI } from "dat.gui";
 import TWEEN from "@tweenjs/tween.js";
 //import { TransformControls } from "three/examples/jsm/controls/TransformControls.js";
+
 // Import Modules
 import { setupShadow } from "./ShadowConfig";
 import { createBasicGui, addCameraControls } from "./GuiControl";
+import { setupDragControls, disableDragControls } from "./DragModule"; // Import the Drag Module
+import { mod } from "three/examples/jsm/nodes/Nodes.js";
 
 // Scene setup
 const scene = new THREE.Scene();
@@ -45,35 +48,15 @@ camera.position.set(0, 0, 15);
 
 // Controls
 
-// TransformControls
-
-// const control = new TransformControls(camera, renderer.domElement);
-// scene.add(control);
-// control.enabled = false;
-
-// const raycaster = new THREE.Raycaster();
-// const mouse = new THREE.Vector2();
-
-// function onMouseDown(event) {
-//   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-//   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-//   raycaster.setFromCamera(mouse, camera);
-//   const intersects = raycaster.intersectObjects(scene.children, true);
-
-//   if (intersects.length > 0) {
-//     control.attach(intersects[0].object);
-//   }
-// }
-
-// window.addEventListener("mousedown", onMouseDown, false);
-
 // OrbitControl
 const orbitControls = new OrbitControls(camera, renderer.domElement);
 orbitControls.enableDamping = true;
 orbitControls.minDistance = 10;
 orbitControls.maxDistance = 500;
 
+// Drag Setup
+const draggableObjects = [];
+const initialTransforms = new Map();
 //#################  GUI  #############################
 
 // initial values  for GUI
@@ -135,6 +118,7 @@ const guiCallbacks = {
     camera.far = guiParams.far;
     camera.updateProjectionMatrix();
   },
+  resetPositions: resetPositions,
 };
 
 const gui = createBasicGui(guiParams, guiCallbacks);
@@ -161,32 +145,80 @@ const modelPaths = [
 ];
 
 // #### Load a Model ##############
+let loadedCount = 0;
 
 modelPaths.forEach((path, index) => {
   loader.load(
     path,
     (gltf) => {
       const model = gltf.scene;
-      model.traverse((node) => {
-        if (node.isMesh) {
-          node.castShadow = true; // Enable casting shadows
-          node.receiveShadow = true; // Enable receiving shadows
-        }
-      });
-
       adjustModel(model);
-      lod.addLevel(model, index * 20); // You might need to adjust this based on actual distance.
-      console.log(`LOD ${index} loaded`);
+      scene.add(model);
+      lod.addLevel(model, index * 20);
+      initialTransforms.set(model, {
+        position: model.position.clone(),
+        rotation: model.rotation.clone(),
+        scale: model.scale.clone(),
+      });
+      draggableObjects.push(model); // Ensure this is fully configured
+
+      if (++loadedCount === modelPaths.length) {
+        const dragControls = setupDragControls(
+          draggableObjects,
+          camera,
+          renderer,
+          orbitControls
+        );
+      }
     },
-    (xhr) => {
-      console.log(`${((xhr.loaded / xhr.total) * 100).toFixed(2)}% loaded`);
-    },
-    (error) => {
-      console.error("An error happened:", error);
-    }
+    (xhr) =>
+      console.log(`Loaded: ${Math.round((xhr.loaded / xhr.total) * 100)}%`),
+    (error) => console.error("An error occurred:", error)
   );
 });
 
+// modelPaths.forEach((path, index) => {
+//   loader.load(
+//     path,
+//     (gltf) => {
+//       const model = gltf.scene;
+//       adjustModel(model); // Ensure adjustModel does not affect initial state capture
+//       scene.add(model);
+//       lod.addLevel(model, index * 20);
+//       initialTransforms.set(model, {
+//         position: model.position.clone(),
+//         rotation: model.rotation.clone(),
+//         scale: model.scale.clone(),
+//       });
+//       draggableObjects.push(model);
+//       console.log(`LOD ${index} loaded`);
+//     },
+//     (xhr) =>
+//       console.log(`Loaded: ${Math.round((xhr.loaded / xhr.total) * 100)}%`),
+//     (error) => console.error("An error occurred:", error)
+//   );
+// });
+
+// function resetPositions() {
+//   console.log("Resetting positions for", draggableObjects.length, "objects");
+//   draggableObjects.forEach((object) => {
+//     const initial = initialTransforms.get(object);
+//     if (initial) {
+//       console.log("Resetting object to", initial.position);
+//       object.position.copy(initial.position);
+//       object.rotation.copy(initial.rotation);
+//       object.scale.copy(initial.scale);
+//     } else {
+//       console.log("No initial position stored for an object");
+//     }
+//   });
+// }
+
+// Add this directly in your GUI setup section
+// gui
+
+//gui.add(guiCallbacks, "resetPositions").name("Reset Positions");
+// GUI setup for resetting positions
 function adjustModel(model) {
   model.position.set(0, 0, 0);
   const boundingBox = new THREE.Box3().setFromObject(model);
@@ -197,7 +229,56 @@ function adjustModel(model) {
   model.scale.set(scaleFactor, scaleFactor, scaleFactor);
   const center = boundingBox.getCenter(new THREE.Vector3());
   model.position.sub(center.multiplyScalar(scaleFactor));
+
+  console.log("This is Position intitail: ", model.position);
 }
+
+// Reset Drag function
+/*
+function resetDraggableObjects() {
+  draggableObjects.forEach((object) => {
+    const initial = initialTransforms.get(object);
+    if (initial) {
+      object.position.copy(initial.position);
+      object.rotation.copy(initial.rotation);
+      object.scale.copy(initial.scale);
+      console.log(`Object reset to position: ${initial.position}`);
+    } else {
+      console.error("No initial transform data stored for an object");
+    }
+  });
+}
+document.addEventListener("DOMContentLoaded", function () {
+  const resetButton = document.getElementById("resetObjects");
+  if (!resetButton) {
+    console.log("Reset button not found!");
+    return;
+  }
+  console.log("Reset button found, adding listener");
+  resetButton.addEventListener("click", resetDraggableObjects);
+});
+*/
+function resetPositions() {
+  console.log("Resetting positions for", draggableObjects.length, "objects");
+  draggableObjects.forEach((object) => {
+    const initial = initialTransforms.get(object);
+    if (initial) {
+      object.position.copy(initial.position);
+      object.rotation.copy(initial.rotation);
+      object.scale.copy(initial.scale);
+      object.updateMatrix();
+      console.log("Reset to initial position:", initial.position);
+    } else {
+      console.error("No initial transform stored for object", object);
+    }
+    console.log("Thisi is Transsss : ", initialTransforms.get(object));
+  });
+}
+
+console.log("Position immediately after reset:", lod.position);
+
+// GUI setup for resetting positions
+gui.add({ resetAll: resetPositions }, "resetAll").name("Reset All Objects");
 
 // Camera transition function for smooth movement
 function transitionCamera(newPosition, newLookAt, duration = 2000) {
@@ -233,7 +314,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
   console.log("Button found, adding listener");
   camFocus.addEventListener("click", () => {
-    console.log("Button clicked!");
+    console.log("CamFocus clicked!");
     const newPosition = { x: 10, y: 10, z: 10 };
     const newLookAt = { x: 0, y: 0, z: 0 };
     transitionCamera(newPosition, newLookAt);
@@ -247,9 +328,9 @@ function animate() {
   TWEEN.update();
   renderer.render(scene, camera);
   orbitControls.update();
-  // Debugging camera distance to the LOD
-  const distance = camera.position.distanceTo(lod.position);
-  console.log(`Camera distance: ${distance}`); // Check if this value crosses LOD thresholds
+  //  camera distance to the LOD
+  //const distance = camera.position.distanceTo(lod.position);
+  //console.log(`Camera distance: ${distance}`);
   lod.update(camera);
 }
 
