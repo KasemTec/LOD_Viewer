@@ -58,3 +58,11 @@ npx vite
 ```
 
 4. Open `http://localhost:5173/` in browser
+
+## Demo Video
+
+<video width="640" height="360" controls>
+  <source src="assets/media/demo.mp4" type="video/mp4">
+</video>
+
+
