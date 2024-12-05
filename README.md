@@ -13,9 +13,9 @@ This project demonstrates the implementation of a dynamic Level of Detail (LOD) 
 - Smooth Camera Transitions: Utilizes Tween.js for fluid camera movements and focus changes.
 - **Interactive GUI: Includes a customizable interface built with dat.GUI, allowing real-time control of:**
 
-1. Shadow toggling and intensity adjustments.
-2. Fog effects (color and density).
-3. Camera parameters (FOV, position, and far clipping).
+  1. Shadow toggling and intensity adjustments.
+  2. Fog effects (color and density).
+  3. Camera parameters (FOV, position, and far clipping).
 
 - **Shadow and Fog Optimization: Dynamically adjusts shadow casting and fog settings for better visual quality and performanc.**
 - **Model Loading with GLTFLoader: Supports loading multiple LOD levels of models in .glb format.**
