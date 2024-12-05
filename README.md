@@ -61,6 +61,7 @@ npx vite
 
 ## Demo Video
 
-https://github.com/user-attachments/assets/06c9a1a4-2823-4fbc-8b12-6dd14a206f88
-
-
+<video width="640" height="360" controls>
+  <source src="https://github.com/user-attachments/assets/06c9a1a4-2823-4fbc-8b12-6dd14a206f88" type="video/mp4">
+ 
+</video>
