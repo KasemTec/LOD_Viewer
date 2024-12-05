@@ -12,10 +12,10 @@ import { createBasicGui, addCameraControls } from "./GuiControl";
 // Scene setup
 const scene = new THREE.Scene();
 THREE.ColorManagement.enabled = true;
-scene.background = new THREE.Color(0x404040);
+scene.background = new THREE.Color(0xffffff); // 0x404040
 
 // Lighting
-const ambientLight = new THREE.AmbientLight(0x404040, 3);
+const ambientLight = new THREE.AmbientLight(0xffffff, 3);
 scene.add(ambientLight);
 
 const directionalLight = new THREE.DirectionalLight(0xffffff, 10);
@@ -121,12 +121,12 @@ const lod = new LOD();
 scene.add(lod);
 
 const modelPaths = [
-  "./assets/models/Shackle/LOD_0.glb",
-  "./assets/models/Shackle/LOD_1.glb",
-  "./assets/models/Shackle/LOD_2.glb",
-  "./assets/models/Shackle/LOD_3.glb",
-  "./assets/models/Shackle/LOD_4.glb",
-  "./assets/models/Shackle/LOD_5.glb",
+  "./assets/models/Bohrer/LOD_0.glb",
+  "./assets/models/Bohrer/LOD_1.glb",
+  "./assets/models/Bohrer/LOD_2.glb",
+  "./assets/models/Bohrer/LOD_3.glb",
+  "./assets/models/Bohrer/LOD_4.glb",
+  "./assets/models/Bohrer/LOD_5.glb",
 ];
 
 // Load models and assign LOD levels
